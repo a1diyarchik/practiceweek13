@@ -1,22 +1,33 @@
 package com.example.myapplication.data
 
-import com.example.myapplication.R
-import com.example.myapplication.model.Follower
-import com.example.myapplication.model.UserProfile
+import com.example.myapplication.Post
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class UserRepository @Inject constructor() {
+@Singleton
+class UserRepository @Inject constructor(
+    private val api: ApiService,
+    private val db: AppDatabase
+) {
 
-    suspend fun getUserProfile(): UserProfile {
-        return UserProfile(
-            name = "Aldiyar Nassyrov",
-            bio = "Hello! My name is Aldiyar. I am a game designer...",
-            followers = listOf(
-                Follower(1, "Alex", R.drawable.photo),
-                Follower(2, "John", R.drawable.photo),
-                Follower(3, "Aruzhan", R.drawable.photo),
-                Follower(4, "Madi", R.drawable.photo),
-            )
-        )
+    private val _posts = MutableStateFlow<List<Post>>(emptyList())
+    val posts = _posts.asStateFlow()
+
+    suspend fun loadPosts() {
+        _posts.value = api.getPosts()
+    }
+
+    suspend fun likePost(id: Int) {
+        _posts.value = _posts.value.map {
+            if (it.id == id) it.copy(likes = it.likes + 1) else it
+        }
+    }
+
+    suspend fun addComment(id: Int, comment: String) {
+        _posts.value = _posts.value.map {
+            if (it.id == id) it.copy(comments = it.comments + comment) else it
+        }
     }
 }

@@ -1,22 +1,9 @@
-package com.example.myapplication.data.network
+package com.example.myapplication.data
 
+import com.example.myapplication.Post
 import retrofit2.http.GET
 
 interface ApiService {
-
-    @GET("profile")
-    suspend fun getProfile(): ProfileDto
-
-    @GET("followers")
-    suspend fun getFollowers(): List<FollowerDto>
+    @GET("posts")
+    suspend fun getPosts(): List<Post>
 }
-
-data class ProfileDto(
-    val name: String,
-    val bio: String
-)
-
-data class FollowerDto(
-    val id: Int,
-    val name: String
-)
