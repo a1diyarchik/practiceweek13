@@ -1,5 +1,5 @@
 package com.example.myapplication
-
+//practice week 8-9(practice 5)
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -11,9 +11,6 @@ data class Follower(val id: Int, val name: String, val avatarRes: Int)
 
 class ProfileViewModel : ViewModel() {
 
-    // ---------------------------
-    // Основные данные профиля
-    // ---------------------------
 
     var name by mutableStateOf("Aldiyar Nassyrov")
         private set
@@ -41,19 +38,16 @@ class ProfileViewModel : ViewModel() {
     private var nextFollowerId = 5
 
 
-    // ---------------------------
-    // Состояния, которые должен хранить VM
-    // ---------------------------
 
-    // онлайн статус
     var isOnline by mutableStateOf(true)
         private set
+
 
     fun toggleOnline() {
         isOnline = !isOnline
     }
 
-    // синхронизация аватара (флаг)
+
     var isSyncing by mutableStateOf(false)
         private set
 
@@ -63,7 +57,7 @@ class ProfileViewModel : ViewModel() {
         isSyncing = false
     }
 
-    // загрузка аватара
+
     var isAvatarLoading by mutableStateOf(true)
         private set
 
@@ -71,7 +65,7 @@ class ProfileViewModel : ViewModel() {
         isAvatarLoading = false
     }
 
-    // появление статистики
+
     var statsVisible by mutableStateOf(false)
         private set
 
@@ -80,9 +74,6 @@ class ProfileViewModel : ViewModel() {
     }
 
 
-    // ---------------------------
-    // Функции профиля
-    // ---------------------------
 
     fun updateName(newName: String) {
         name = newName

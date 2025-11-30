@@ -99,21 +99,21 @@ fun ProfileScreen(
     val bio by remember { derivedStateOf { viewModel.bio } }
     val followers by remember { derivedStateOf { viewModel.followers } }
     val isFollowed by remember { derivedStateOf { viewModel.isFollowed } }
+    val isOnline by remember { derivedStateOf { viewModel.isOnline } }
+    val isSyncing by remember { derivedStateOf { viewModel.isSyncing } }
+    val isAvatarLoading by remember { derivedStateOf { viewModel.isAvatarLoading } }
+    val statsVisible by remember { derivedStateOf { viewModel.statsVisible } }
+
+
 
     var isBioExpanded by rememberSaveable { mutableStateOf(false) }
-    var isOnline by rememberSaveable { mutableStateOf(true) }
 
-
-    var isSyncing by rememberSaveable { mutableStateOf(false) }          // 1. синк аватара
-    var isLoadingAvatar by rememberSaveable { mutableStateOf(true) }     // 4. shimmer
-    var statsVisible by remember { mutableStateOf(false) }               // 3. fade-in статистики
-    var isAvatarLoading by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        delay(1200) // 1.2 сек – можешь поставить любое время
-        isAvatarLoading = false
+        delay(1200)
+        viewModel.setAvatarLoaded()
     }
 
-    // анимация масштаба аватара (spring bounce)
+
     val avatarScale by animateFloatAsState(
         targetValue = if (isSyncing) 1.1f else 1f,
         animationSpec = spring(
@@ -134,13 +134,10 @@ fun ProfileScreen(
         label = "onlineDotScale"
     )
 
-    // старт анимаций при первом показе
     LaunchedEffect(Unit) {
-        // имитируем загрузку аватара
         delay(1200)
-        isLoadingAvatar = false
-        // включаем плавное появление статистики
-        statsVisible = true
+        viewModel.setAvatarLoaded()
+        viewModel.showStats()
     }
     val followButtonColor by animateColorAsState(
         targetValue = if (isFollowed) Color.Red else Color.Blue,
@@ -194,7 +191,6 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Stories
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,26 +235,22 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(150.dp)
                                 .clickable {
-                                    // переключаем онлайн + запускаем "синк"
-                                    isOnline = !isOnline
                                     scope.launch {
-                                        isSyncing = true
-                                        delay(800)      // время "синхронизации"
-                                        isSyncing = false
+                                        viewModel.toggleOnline()
+                                        viewModel.runSync()
                                     }
+
                                 },
                             contentAlignment = Alignment.BottomEnd
                         ) {
 
-                            // 4. SHIMMER, пока аватар "грузится"
-                            if (isLoadingAvatar) {
+                            if (isAvatarLoading) {
                                 ShimmerBox(
                                     modifier = Modifier
                                         .size(150.dp)
                                         .clip(CircleShape)
                                 )
                             } else {
-                                // 1. АНИМАЦИЯ МАСШТАБА АВАТАРА ПРИ СИНКЕ (spring)
                                 if (isAvatarLoading) {
                                     Box(
                                         modifier = Modifier
@@ -285,8 +277,7 @@ fun ProfileScreen(
 
                             }
 
-                            // 2. ПУЛЬСИРУЮЩИЙ ИНДИКАТОР ОНЛАЙНА
-                            if (isOnline && !isLoadingAvatar) {
+                            if (isOnline && !isAvatarLoading) {
                                 Box(
                                     modifier = Modifier
                                         .size(20.dp)
@@ -353,7 +344,6 @@ fun ProfileScreen(
                             )
                         }
 
-                        // bonus: легкий bounce для кнопки подписки
                         var buttonPressed by remember { mutableStateOf(false) }
                         val buttonScale by animateFloatAsState(
                             targetValue = if (buttonPressed) 1.05f else 1f,
@@ -364,7 +354,6 @@ fun ProfileScreen(
                             label = "buttonScale"
                         )
 
-                        // 3. FADE-IN блока статистики
                         AnimatedVisibility(
                             visible = statsVisible,
                             enter = fadeIn(animationSpec = tween(700))
@@ -393,7 +382,6 @@ fun ProfileScreen(
                                         val willFollow = !isFollowed
                                         viewModel.toggleFollow()
 
-                                        // bounce
                                         scope.launch {
                                             buttonPressed = true
                                             delay(150)
@@ -485,7 +473,7 @@ fun ProfileScreen(
                     AnimatedVisibility(
                         visible = true,
                         enter = slideInVertically(
-                            initialOffsetY = { fullHeight -> fullHeight } // снизу вверх
+                            initialOffsetY = { fullHeight -> fullHeight }
                         ) + fadeIn(),
                         exit = fadeOut()
                     ) {

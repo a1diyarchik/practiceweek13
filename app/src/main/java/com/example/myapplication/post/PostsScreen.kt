@@ -57,13 +57,10 @@ fun PostsScreen(
     LaunchedEffect(posts.size) {
         if (posts.isNotEmpty()) {
 
-            // ждём один кадр — LazyColumn успевает перестроиться
             awaitFrame()
 
-            // ждём ещё немного (иногда нужно)
             delay(50)
 
-            // индекс последнего поста = posts.size
             listState.animateScrollToItem(posts.size)
         }
     }
@@ -72,7 +69,7 @@ fun PostsScreen(
 
     var isLoading by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
-        delay(2000) // задержка 0.8 сек, можно менять
+        delay(2000)
         isLoading = false
     }
 
@@ -108,7 +105,6 @@ fun PostsScreen(
         ) {
 
             if (isLoading) {
-                // Показываем loader вместо постов
                 item {
                     Box(
                         modifier = Modifier
@@ -123,7 +119,6 @@ fun PostsScreen(
                     }
                 }
             } else {
-                // Когда загрузка закончилась — показываем контент
                 item {
                     AddPostCard(viewModel = postsViewModel)
                 }

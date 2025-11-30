@@ -100,7 +100,6 @@ fun PostCard(post: Post, viewModel: PostsViewModel) {
                         likePressed = true
                         viewModel.toggleLike(post.id)
 
-                        // сбрасываем bounce через coroutine
                         scope.launch {
                             delay(150)
                             likePressed = false
