@@ -573,27 +573,7 @@ fun RecompositionPanel(
     }
 }
 
-@Composable
-fun FakeCounter(speed: Float): Int {
-    var counter by remember { mutableStateOf(0) }
-    var running by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        delay(9000)
-        running = false
-    }
-
-    LaunchedEffect(running, speed) {
-        if (!running) return@LaunchedEffect
-
-        while (running) {
-            delay((300 / speed).toLong())
-            counter++
-        }
-    }
-
-    return counter
-}
 
 
 

@@ -19,9 +19,9 @@ class PostsViewModel : ViewModel() {
 
     var posts by mutableStateOf(
         listOf(
-            Post(1, "Alex", R.drawable.photo1, likes = 10),
-            Post(2, "Aruzhan", R.drawable.photo4, likes = 3),
-            Post(3, "Madi", R.drawable.photo3, likes = 1)
+            Post(1, "Alex", R.drawable.photo1, likes = 14),
+            Post(2, "Aruzhan", R.drawable.f5, likes = 7),
+            Post(3, "Madi", R.drawable.photo3, likes = 51)
         )
     )
         private set

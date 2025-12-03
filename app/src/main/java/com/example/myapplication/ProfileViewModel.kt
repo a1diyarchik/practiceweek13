@@ -24,10 +24,10 @@ class ProfileViewModel : ViewModel() {
 
     var followers by mutableStateOf(
         listOf(
-            Follower(1, "Alex", R.drawable.photo),
-            Follower(2, "John", R.drawable.photo),
-            Follower(3, "Aruzhan", R.drawable.photo),
-            Follower(4, "Madi", R.drawable.photo),
+            Follower(1, "Alex", R.drawable.f1),
+            Follower(2, "John", R.drawable.f3),
+            Follower(3, "Aruzhan", R.drawable.f2),
+            Follower(4, "Madi", R.drawable.f4),
         )
     )
         private set

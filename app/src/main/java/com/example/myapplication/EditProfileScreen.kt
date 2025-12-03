@@ -23,14 +23,19 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,4 +109,25 @@ fun EditProfileScreen(
             ) { Text("Save") }
         }
     }
+}
+@Composable
+fun FakeCounter(speed: Float): Int {
+    var counter by remember { mutableStateOf(0) }
+    var running by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(9000)
+        running = false
+    }
+
+    LaunchedEffect(running, speed) {
+        if (!running) return@LaunchedEffect
+
+        while (running) {
+            delay((300 / speed).toLong())
+            counter++
+        }
+    }
+
+    return counter
 }
