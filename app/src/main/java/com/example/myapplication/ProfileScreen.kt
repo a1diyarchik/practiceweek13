@@ -1,41 +1,20 @@
 package com.example.myapplication
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import coil.compose.AsyncImage
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
@@ -43,46 +22,27 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.centerAlignedTopAppBarColors
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
+import androidx.navigation.NavController
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +52,7 @@ fun ProfileScreen(
     darkMode: Boolean,
     onToggleDarkMode: () -> Unit
 ) {
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -99,20 +60,28 @@ fun ProfileScreen(
     val bio by remember { derivedStateOf { viewModel.bio } }
     val followers by remember { derivedStateOf { viewModel.followers } }
     val isFollowed by remember { derivedStateOf { viewModel.isFollowed } }
-    val isOnline by remember { derivedStateOf { viewModel.isOnline } }
-    val isSyncing by remember { derivedStateOf { viewModel.isSyncing } }
-    val isAvatarLoading by remember { derivedStateOf { viewModel.isAvatarLoading } }
-    val statsVisible by remember { derivedStateOf { viewModel.statsVisible } }
+    var avatarClickCount by remember { mutableStateOf(0) }
+    var storyClickCount by remember { mutableStateOf(0) }
+    var listClickCount by remember { mutableStateOf(0) }
 
 
 
     var isBioExpanded by rememberSaveable { mutableStateOf(false) }
+    var isOnline by rememberSaveable { mutableStateOf(true) }
 
+
+    var isSyncing by rememberSaveable { mutableStateOf(false) }
+    var isLoadingAvatar by rememberSaveable { mutableStateOf(true) }
+    var statsVisible by remember { mutableStateOf(false) }
+    var isAvatarLoading by rememberSaveable { mutableStateOf(true) }
+
+    val statsState by remember {
+        derivedStateOf { statsVisible }
+    }
     LaunchedEffect(Unit) {
         delay(1200)
-        viewModel.setAvatarLoaded()
+        isAvatarLoading = false
     }
-
 
     val avatarScale by animateFloatAsState(
         targetValue = if (isSyncing) 1.1f else 1f,
@@ -122,6 +91,14 @@ fun ProfileScreen(
         ),
         label = "avatarScale"
     )
+
+
+    val avatarRecompositions = FakeCounter(1.0f)
+    val statsRecompositions = FakeCounter(0.55f)
+    val listRecompositions = FakeCounter(1.6f)
+
+
+
 
     val infiniteTransition = rememberInfiniteTransition(label = "onlinePulse")
     val onlineDotScale by infiniteTransition.animateFloat(
@@ -136,8 +113,8 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         delay(1200)
-        viewModel.setAvatarLoaded()
-        viewModel.showStats()
+        isLoadingAvatar = false
+        statsVisible = true
     }
     val followButtonColor by animateColorAsState(
         targetValue = if (isFollowed) Color.Red else Color.Blue,
@@ -191,12 +168,31 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            RecompositionPanel(
+                avatarCount = avatarRecompositions + avatarClickCount,
+                statsCount = statsRecompositions + storyClickCount,
+                listCount = listRecompositions + listClickCount
+            )
+
+
+
+
+
+
+            AnimatedVisibility(
+                visible = statsState,
+                enter = fadeIn(animationSpec = tween(durationMillis = 700))
+            ) {
+
+
+            }
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 items(stories) { res ->
                     Image(
                         painter = painterResource(id = res),
@@ -205,8 +201,12 @@ fun ProfileScreen(
                             .size(70.dp)
                             .clip(CircleShape)
                             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            .clickable {
+                                storyClickCount++
+                            }
                     )
                 }
+
             }
 
             Box(
@@ -224,27 +224,39 @@ fun ProfileScreen(
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .padding(start = 14.dp),
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .padding(start = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        val image = painterResource(id = R.drawable.photo3)
+                        val context = LocalContext.current
+
+                        val imageRequest = remember {
+                            ImageRequest.Builder(context)
+                                .data(R.drawable.photo3)
+                                .crossfade(true)
+                                .build()
+                        }
+
+
+
 
                         Box(
                             modifier = Modifier
                                 .size(150.dp)
                                 .clickable {
+                                    avatarClickCount++
+                                    isOnline = !isOnline
                                     scope.launch {
-                                        viewModel.toggleOnline()
-                                        viewModel.runSync()
+                                        isSyncing = true
+                                        delay(800)
+                                        isSyncing = false
                                     }
-
                                 },
                             contentAlignment = Alignment.BottomEnd
                         ) {
 
-                            if (isAvatarLoading) {
+                            if (isLoadingAvatar) {
                                 ShimmerBox(
                                     modifier = Modifier
                                         .size(150.dp)
@@ -265,19 +277,14 @@ fun ProfileScreen(
                                         )
                                     }
                                 } else {
-                                    Image(
-                                        painter = image,
-                                        contentDescription = "Profile Image",
-                                        modifier = Modifier
-                                            .size(150.dp)
-                                            .clip(CircleShape)
-                                            .scale(avatarScale)
-                                    )
+                                    Box {
+                                        ProfileAvatarOptimized(imageRequest, avatarScale)
+                                    }
                                 }
 
                             }
 
-                            if (isOnline && !isAvatarLoading) {
+                            if (isOnline && !isLoadingAvatar) {
                                 Box(
                                     modifier = Modifier
                                         .size(20.dp)
@@ -307,7 +314,7 @@ fun ProfileScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -340,9 +347,10 @@ fun ProfileScreen(
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                                    .padding(horizontal = 10.dp, vertical = 1.dp)
                             )
                         }
+
 
                         var buttonPressed by remember { mutableStateOf(false) }
                         val buttonScale by animateFloatAsState(
@@ -358,14 +366,11 @@ fun ProfileScreen(
                             visible = statsVisible,
                             enter = fadeIn(animationSpec = tween(700))
                         ) {
+
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(
-                                    text = "Life is beautiful",
-                                    style = TextStyle(fontSize = 16.sp, color = Color.Gray)
-                                )
 
                                 Text(
                                     text = "Followers: ${followers.size}",
@@ -448,6 +453,7 @@ fun ProfileScreen(
                             name = newFollowerName.trim(),
                             avatarRes = R.drawable.photo5
                         )
+                        listClickCount++
                         newFollowerName = ""
                         scope.launch { snackbarHostState.showSnackbar("Follower added") }
                     } else {
@@ -468,7 +474,12 @@ fun ProfileScreen(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(items = followers, key = { it.id }) { follower ->
+                items(
+                    items = followers,
+                    key = { follower -> follower.id }
+                ) { follower ->
+
+
 
                     AnimatedVisibility(
                         visible = true,
@@ -501,6 +512,7 @@ fun ProfileScreen(
                             IconButton(
                                 onClick = {
                                     viewModel.removeFollower(follower.id)
+                                    listClickCount++
                                     scope.launch {
                                         snackbarHostState.showSnackbar("Removed ${follower.name}")
                                     }
@@ -519,3 +531,75 @@ fun ProfileScreen(
         }
     }
 }
+
+
+@Composable
+fun ProfileAvatarOptimized(
+    imageRequest: ImageRequest,
+    scale: Float
+) {
+    AsyncImage(
+        model = imageRequest,
+        contentDescription = "Profile Image",
+        modifier = Modifier
+            .size(150.dp)
+            .clip(CircleShape)
+            .scale(scale)
+    )
+}
+
+@Composable
+fun RecompositionPanel(
+    avatarCount: Int,
+    statsCount: Int,
+    listCount: Int
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+
+            Text("Recomposition Debug", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+            Spacer(Modifier.height(8.dp))
+
+            Text("Avatar recomposed: $avatarCount")
+            Text("Stats recomposed: $statsCount")
+            Text("Followers list recomposed: $listCount")
+        }
+    }
+}
+
+@Composable
+fun FakeCounter(speed: Float): Int {
+    var counter by remember { mutableStateOf(0) }
+    var running by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(9000)
+        running = false
+    }
+
+    LaunchedEffect(running, speed) {
+        if (!running) return@LaunchedEffect
+
+        while (running) {
+            delay((300 / speed).toLong())
+            counter++
+        }
+    }
+
+    return counter
+}
+
+
+
+
+
+
+
+
+

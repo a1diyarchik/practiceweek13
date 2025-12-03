@@ -1,5 +1,5 @@
 package com.example.myapplication.feed
-//practice week 11 (practice 7)
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.UserRepository
